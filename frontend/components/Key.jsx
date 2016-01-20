@@ -4,6 +4,9 @@ var React = require('react'),
     KeyStore = require('../stores/KeyStore');
 
 var Key = React.createClass({
+  getInitialState: function () {
+    return { pressed: "" };
+  },
 
   componentDidMount: function(){
     KeyStore.addListener(this.handleKey);
@@ -13,9 +16,12 @@ var Key = React.createClass({
   handleKey: function(){
     if (KeyStore.all().indexOf(this.props.noteName) !== -1){
       this.note.start();
+      this.setState({ pressed: "pressed" });
     } else {
       this.note.stop();
+      this.setState({ pressed: "" });
     }
+
   },
 
   componentWillUnmount: function(){
@@ -23,10 +29,11 @@ var Key = React.createClass({
   },
 
   render: function(){
-    return (
-      <div className="key">
-        {this.props.noteName}
+    var klass = "key " + this.props.noteName + " " + this.state.pressed;
 
+    return (
+      <div className={klass}>
+        {this.props.noteName}
       </div>
     );
   }

@@ -13,3 +13,58 @@
  *= require_tree .
  *= require_self
  */
+
+.keys {
+  width: 820px;
+  position: relative;
+}
+
+.key {
+  width: 100px;
+  height: 300px;
+  background: white;
+  border: 1px solid black;
+  float:left;
+  text-align: center;
+}
+
+.group:after {
+  content: "";
+  clear: both;
+  display:block;
+}
+
+
+.CS3, .DS3, .FS3, .GS3, .AS3 {
+  background: black;
+  color: white;
+  height: 150px;
+  width: 50px;
+  position: absolute;
+  left: 1000px;
+}
+
+.CS3 {
+  left: 75px;
+}
+
+.DS3 {
+  left: 175px;
+}
+
+.FS3 {
+  left: 375px;
+}
+
+.GS3 {
+  left: 475px;
+}
+
+.AS3 {
+  left: 575px;
+}
+
+.pressed {
+  border-style: inset;
+  background: gray;
+}

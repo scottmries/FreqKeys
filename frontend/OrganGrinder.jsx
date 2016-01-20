@@ -20,7 +20,7 @@ var OrganGrinder = React.createClass({
     });
 
     return(
-      <div className="keys">
+      <div className="keys group">
         {keys}
       </div>
     );

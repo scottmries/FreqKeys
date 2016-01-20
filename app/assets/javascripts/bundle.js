@@ -69,7 +69,7 @@
 	
 	    return React.createElement(
 	      'div',
-	      { className: 'keys' },
+	      { className: 'keys group' },
 	      keys
 	    );
 	  }
@@ -26556,16 +26556,16 @@
 
 	var TONES = {
 	  "C3": 130.81,
-	  "C#3": 138.59,
+	  "CS3": 138.59,
 	  "D3": 146.83,
-	  "D#3": 155.56,
+	  "DS3": 155.56,
 	  "E3": 164.81,
 	  "F3": 174.61,
-	  "F#3": 185.00,
+	  "FS3": 185.00,
 	  "G3": 196.00,
-	  "G#3": 207.65,
+	  "GS3": 207.65,
 	  "A3": 220.00,
-	  "A#3": 233.08,
+	  "AS3": 233.08,
 	  "B3": 246.94,
 	  "C4": 261.63
 	};
@@ -26607,16 +26607,16 @@
 
 	var Mapping = {
 	  65: "C3",
-	  87: "C#3",
+	  87: "CS3",
 	  83: "D3",
-	  69: "D#3",
+	  69: "DS3",
 	  68: "E3",
 	  70: "F3",
-	  84: "F#3",
+	  84: "FS3",
 	  71: "G3",
-	  89: "G#3",
+	  89: "GS3",
 	  72: "A3",
-	  85: "A#3",
+	  85: "AS3",
 	  74: "B3",
 	  75: "C4"
 	};
@@ -26635,6 +26635,10 @@
 	var Key = React.createClass({
 	  displayName: 'Key',
 	
+	  getInitialState: function () {
+	    return { pressed: "" };
+	  },
+	
 	  componentDidMount: function () {
 	    KeyStore.addListener(this.handleKey);
 	    this.note = new Note(Tones[this.props.noteName]);
@@ -26643,8 +26647,10 @@
 	  handleKey: function () {
 	    if (KeyStore.all().indexOf(this.props.noteName) !== -1) {
 	      this.note.start();
+	      this.setState({ pressed: "pressed" });
 	    } else {
 	      this.note.stop();
+	      this.setState({ pressed: "" });
 	    }
 	  },
 	
@@ -26653,9 +26659,11 @@
 	  },
 	
 	  render: function () {
+	    var klass = "key " + this.props.noteName + " " + this.state.pressed;
+	
 	    return React.createElement(
 	      'div',
-	      { className: 'key' },
+	      { className: klass },
 	      this.props.noteName
 	    );
 	  }
