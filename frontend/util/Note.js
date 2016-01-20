@@ -3,7 +3,7 @@ var ctx = new (window.AudioContext || window.webkitAudioContext)();
 
 var createOscillator = function (freq) {
   var osc = ctx.createOscillator();
-  osc.type = "sine";
+  osc.type = "triangle";
   osc.frequency.value = freq;
   osc.detune.value = 0;
   osc.start(ctx.currentTime);

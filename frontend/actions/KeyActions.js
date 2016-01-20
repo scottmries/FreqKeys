@@ -14,6 +14,20 @@ var KeyActions = {
       actionType: "keyUp",
       noteName: Mapping[keyCode]
     });
+  },
+
+  trackKeyPressed: function (noteName) {
+    AppDispatcher.dispatch({
+      actionType: "keyDown",
+      noteName: noteName
+    });
+  },
+
+  trackKeyReleased: function (noteName) {
+    AppDispatcher.dispatch({
+      actionType: "keyUp",
+      noteName: noteName
+    });
   }
 };
 

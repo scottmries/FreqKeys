@@ -21,7 +21,6 @@ var Key = React.createClass({
       this.note.stop();
       this.setState({ pressed: "" });
     }
-
   },
 
   componentWillUnmount: function(){

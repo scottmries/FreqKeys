@@ -48,17 +48,23 @@
 	    ReactDOM = __webpack_require__(158),
 	    Key = __webpack_require__(186),
 	    KeyListeners = __webpack_require__(165),
-	    Tones = __webpack_require__(183);
+	    Tones = __webpack_require__(183),
+	    Recorder = __webpack_require__(187),
+	    Jukebox = __webpack_require__(190);
 	
 	var OrganGrinder = React.createClass({
 	  displayName: 'OrganGrinder',
 	
-	  componentDidMount: function () {
+	  getInitialState: function () {
+	    return { trackName: "" };
+	  },
+	
+	  addKeyListeners: function () {
 	    KeyListeners.keyup();
 	    KeyListeners.keydown();
 	  },
 	
-	  componentWillUnmount: function () {
+	  removeKeyListeners: function () {
 	    KeyListeners.keyoff();
 	  },
 	
@@ -69,8 +75,14 @@
 	
 	    return React.createElement(
 	      'div',
-	      { className: 'keys group' },
-	      keys
+	      null,
+	      React.createElement(
+	        'div',
+	        { tabIndex: '0', onFocus: this.addKeyListeners, onBlur: this.removeKeyListeners, className: 'keys group' },
+	        keys,
+	        React.createElement(Recorder, null)
+	      ),
+	      React.createElement(Jukebox, null)
 	    );
 	  }
 	});
@@ -19683,7 +19695,7 @@
 	
 	var createOscillator = function (freq) {
 	  var osc = ctx.createOscillator();
-	  osc.type = "sine";
+	  osc.type = "triangle";
 	  osc.frequency.value = freq;
 	  osc.detune.value = 0;
 	  osc.start(ctx.currentTime);
@@ -26596,6 +26608,20 @@
 	      actionType: "keyUp",
 	      noteName: Mapping[keyCode]
 	    });
+	  },
+	
+	  trackKeyPressed: function (noteName) {
+	    AppDispatcher.dispatch({
+	      actionType: "keyDown",
+	      noteName: noteName
+	    });
+	  },
+	
+	  trackKeyReleased: function (noteName) {
+	    AppDispatcher.dispatch({
+	      actionType: "keyUp",
+	      noteName: noteName
+	    });
 	  }
 	};
 	
@@ -26671,6 +26697,268 @@
 	});
 	
 	module.exports = Key;
+
+/***/ },
+/* 187 */
+/***/ function(module, exports, __webpack_require__) {
+
+	var React = __webpack_require__(1),
+	    Track = __webpack_require__(188),
+	    KeyStore = __webpack_require__(160),
+	    TrackActions = __webpack_require__(191);
+	
+	var Recorder = React.createClass({
+	  displayName: 'Recorder',
+	
+	  getInitialState: function () {
+	    return { isRecording: false, name: "", Track: new Track({ name: "" }) };
+	  },
+	
+	  updateTrackName: function () {
+	    this.setState({ name: event.target.value });
+	  },
+	
+	  componentDidMount: function () {
+	    KeyStore.addListener(this.handleRecorded);
+	  },
+	
+	  componentWillUnmount: function () {
+	    keyStore.remove(this.handleRecorded);
+	  },
+	
+	  handleRecorded: function () {
+	    var notes = KeyStore.all();
+	    if (this.state.isRecording) {
+	      this.state.Track.addNotes(notes);
+	    }
+	  },
+	
+	  startOrStop: function () {
+	    var newIsRecording = !this.state.isRecording;
+	    this.setState({ isRecording: newIsRecording });
+	
+	    if (newIsRecording) {
+	      this.state.Track.startRecording();
+	    } else {
+	      this.state.Track.stopRecording();
+	      this.state.Track.updateName(this.state.name);
+	      TrackActions.trackSaved(this.state.Track);
+	      this.setState({ Track: new Track({ name: this.props.trackName }) });
+	    }
+	  },
+	
+	  render: function () {
+	    var content = this.state.isRecording ? "Stop" : "Start";
+	    return React.createElement(
+	      'div',
+	      { className: 'recorder' },
+	      React.createElement(
+	        'button',
+	        { id: 'recorder', onClick: this.startOrStop },
+	        content
+	      ),
+	      React.createElement('input', { type: 'text', onChange: this.updateTrackName, value: this.state.name, placeholder: 'Name for your track' })
+	    );
+	  }
+	});
+	
+	module.exports = Recorder;
+
+/***/ },
+/* 188 */
+/***/ function(module, exports, __webpack_require__) {
+
+	var KeyActions = __webpack_require__(184),
+	    KeyStore = __webpack_require__(160);
+	
+	function Track(options) {
+	  this.name = options.name;
+	  this.roll = options.roll || [];
+	}
+	
+	Track.prototype.updateName = function (name) {
+	  this.name = name;
+	};
+	
+	Track.prototype.startRecording = function () {
+	  this.roll = [];
+	  this.start = Date.now();
+	};
+	
+	Track.prototype.addNotes = function (notes) {
+	  this.roll.push({
+	    timeSlice: Date.now() - this.start,
+	    notes: notes
+	  });
+	};
+	
+	Track.prototype.stopRecording = function () {
+	  this.addNotes([]);
+	};
+	
+	Track.prototype.play = function () {
+	  if (this.interval) {
+	    return;
+	  }
+	  var playbackStartTime = Date.now();
+	  var currentNote = 0;
+	  var roll = this.roll;
+	  var that = this;
+	
+	  this.interval = setInterval(function () {
+	
+	    if (currentNote < roll.length) {
+	      var elapsedTime = Date.now() - playbackStartTime;
+	      var noteNames = roll[currentNote].notes;
+	
+	      if (elapsedTime > roll[currentNote].timeSlice) {
+	        KeyStore.all().forEach(function (noteName) {
+	          KeyActions.trackKeyReleased(noteName);
+	        });
+	
+	        noteNames.forEach(function (noteName) {
+	          KeyActions.trackKeyPressed(noteName);
+	        });
+	
+	        currentNote++;
+	      }
+	    } else {
+	      clearInterval(that.interval);
+	      that.interval = 0;
+	    }
+	  }, 10);
+	};
+	
+	module.exports = Track;
+
+/***/ },
+/* 189 */
+/***/ function(module, exports, __webpack_require__) {
+
+	var Store = __webpack_require__(166).Store,
+	    AppDispatcher = __webpack_require__(161);
+	
+	var TrackStore = new Store(AppDispatcher);
+	var _tracks = [];
+	
+	TrackStore.all = function () {
+	  return _tracks.slice();
+	};
+	
+	function saveTrack(track) {
+	  _tracks.push(track);
+	  TrackStore.__emitChange();
+	}
+	
+	function deleteTrack(track) {}
+	
+	TrackStore.__onDispatch = function (payload) {
+	  switch (payload.actionType) {
+	    case "trackSaved":
+	      saveTrack(payload.track);
+	      break;
+	    case "trackDeleted":
+	      deleteTrack(payload.track);
+	      break;
+	  }
+	};
+	
+	module.exports = TrackStore;
+
+/***/ },
+/* 190 */
+/***/ function(module, exports, __webpack_require__) {
+
+	var React = __webpack_require__(1),
+	    TrackStore = __webpack_require__(189),
+	    TrackPlayer = __webpack_require__(192);
+	
+	var Jukebox = React.createClass({
+	  displayName: 'Jukebox',
+	
+	  getInitialState: function () {
+	    return { tracks: TrackStore.all() };
+	  },
+	
+	  componentDidMount: function () {
+	    TrackStore.addListener(this.handleTrackSaved);
+	  },
+	
+	  componentWillUnmount: function () {
+	    TrackStore.remove(this.handleTrackSaved);
+	  },
+	
+	  handleTrackSaved: function () {
+	    this.setState({ tracks: TrackStore.all() });
+	  },
+	
+	  render: function () {
+	    var tracks = this.state.tracks.map(function (track) {
+	      return React.createElement(TrackPlayer, { track: track });
+	    });
+	
+	    return React.createElement(
+	      'ul',
+	      { className: 'jukebox' },
+	      tracks
+	    );
+	  }
+	});
+	
+	module.exports = Jukebox;
+
+/***/ },
+/* 191 */
+/***/ function(module, exports, __webpack_require__) {
+
+	var AppDispatcher = __webpack_require__(161);
+	
+	var TrackActions = {
+	  trackSaved: function (track) {
+	    AppDispatcher.dispatch({
+	      actionType: "trackSaved",
+	      track: track
+	    });
+	  },
+	
+	  trackDeleted: function (track) {
+	    AppDispatcher.dispatch({
+	      actionType: "trackDeleted",
+	      track: track
+	    });
+	  }
+	};
+	
+	module.exports = TrackActions;
+
+/***/ },
+/* 192 */
+/***/ function(module, exports, __webpack_require__) {
+
+	var React = __webpack_require__(1);
+	
+	var TrackPlayer = React.createClass({
+	  displayName: "TrackPlayer",
+	
+	  handleTrackPlay: function () {
+	    this.props.track.play();
+	  },
+	
+	  render: function () {
+	    return React.createElement(
+	      "li",
+	      { key: Date.now() * Math.floor(Math.random() * 9999) },
+	      this.props.track.name,
+	      React.createElement(
+	        "button",
+	        { id: "play-track", onClick: this.handleTrackPlay },
+	        "Play"
+	      )
+	    );
+	  }
+	});
+	
+	module.exports = TrackPlayer;
 
 /***/ }
 /******/ ]);

@@ -2,17 +2,24 @@ var React = require('react'),
     ReactDOM = require('react-dom'),
     Key = require('./components/Key'),
     KeyListeners = require('./util/KeyListener'),
-    Tones = require('./constants/Tones');
+    Tones = require('./constants/Tones'),
+    Recorder = require('./components/Recorder'),
+    Jukebox = require('./components/Jukebox');
 
 var OrganGrinder = React.createClass({
-  componentDidMount: function(){
+  getInitialState: function(){
+    return { trackName: "" };
+  },
+
+  addKeyListeners: function () {
     KeyListeners.keyup();
     KeyListeners.keydown();
   },
 
-  componentWillUnmount: function(){
+  removeKeyListeners: function () {
     KeyListeners.keyoff();
   },
+
 
   render: function () {
     var keys = Object.keys(Tones).map(function (noteName) {
@@ -20,8 +27,13 @@ var OrganGrinder = React.createClass({
     });
 
     return(
-      <div className="keys group">
-        {keys}
+      <div>
+        <div tabIndex="0" onFocus={this.addKeyListeners} onBlur={this.removeKeyListeners} className="keys group">
+          {keys}
+          <Recorder />
+        </div>
+
+        <Jukebox />
       </div>
     );
   }

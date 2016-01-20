@@ -17,6 +17,7 @@
 .keys {
   width: 820px;
   position: relative;
+  margin: auto;
 }
 
 .key {
@@ -41,7 +42,6 @@
   height: 150px;
   width: 50px;
   position: absolute;
-  left: 1000px;
 }
 
 .CS3 {
@@ -67,4 +67,8 @@
 .pressed {
   border-style: inset;
   background: gray;
+}
+
+.keys:focus {
+  border: 1px solid yellow;
 }
