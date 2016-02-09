@@ -8,8 +8,9 @@ var Recorder = React.createClass({
     return { isRecording: false, name: "", Track: new Track({ name: "" }) };
   },
 
-  updateTrackName: function(){
-    this.setState({ name: event.target.value });
+  updateTrackName: function(e){
+    console.log(e.target.value);
+    this.setState({ name: e.target.value });
   },
 
   componentDidMount: function () {
@@ -37,7 +38,7 @@ var Recorder = React.createClass({
       this.state.Track.stopRecording();
       this.state.Track.updateName(this.state.name);
       TrackActions.trackSaved(this.state.Track);
-      this.setState({ Track: new Track({ name: this.props.trackName })});
+      this.setState({ Track: new Track({ name: this.state.trackName })});
     }
   },
 

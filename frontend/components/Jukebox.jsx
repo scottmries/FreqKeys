@@ -16,12 +16,13 @@ var Jukebox = React.createClass({
   },
 
   handleTrackSaved: function () {
+    debugger
     this.setState({ tracks: TrackStore.all() });
   },
 
   render: function(){
     var tracks = this.state.tracks.map(function (track) {
-      return <TrackPlayer track={track} />;
+      return <TrackPlayer track={track} key={track.name} />;
     });
 
     return (
