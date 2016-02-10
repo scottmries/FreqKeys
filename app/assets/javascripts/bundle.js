@@ -57,10 +57,11 @@
 	analyser = ctx.createAnalyser();
 	merger = ctx.createChannelMerger(13);
 	gainNode = ctx.createGain();
+	bufferLength = analyser.frequencyBinCount;
+	dataArray = new Uint8Array(bufferLength);
+	
 	merger.connect(analyser);
 	analyser.connect(ctx.destination);
-	var bufferLength = analyser.frequencyBinCount;
-	var dataArray = new Uint8Array(bufferLength);
 	analyser.fftSize = 2048;
 	
 	var OrganGrinder = React.createClass({
@@ -19721,6 +19722,7 @@
 	  },
 	
 	  componentDidMount: function () {
+	    console.log(this.props.noteName, this.props.channel, this.props.merger);
 	    KeyStore.addListener(this.handleKey);
 	    this.note = new Note(Tones[this.props.noteName], this.props.channel, this.props.ctx, this.props.merger);
 	  },
@@ -19793,21 +19795,25 @@
 	
 	var createGainNode = function (ctx, channel, merger) {
 	  var gainNode = ctx.createGain();
+	  console.log(gainNode);
 	  gainNode.gain.value = 0;
-	  gainNode.connect(merger, 0, channel);
+	  gainNode.connect(merger, 0, channel % 2);
+	  gainNode.connect(merger, 0, (channel + 1) % 2);
 	  return gainNode;
 	};
 	
 	var Note = function (freq, channel, ctx, merger) {
 	  this.oscillatorNode = createOscillator(freq, ctx);
+	  // this.oscillatorNode.connect(merger, 0, channel);
 	  this.gainNode = createGainNode(ctx, channel, merger);
 	  this.oscillatorNode.connect(this.gainNode);
+	  this.gainNode.connect(merger, 0, channel % 2);
+	  console.log(this.oscillatorNode);
 	  ctx = ctx;
 	};
 	
 	Note.prototype = {
 	  start: function () {
-	    // can't explain 0.3, it is a reasonable value
 	    this.gainNode.gain.value = 0.7;
 	  },
 	

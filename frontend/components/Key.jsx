@@ -9,6 +9,7 @@ var Key = React.createClass({
   },
 
   componentDidMount: function(){
+    console.log(this.props.noteName, this.props.channel, this.props.merger);
     KeyStore.addListener(this.handleKey);
     this.note = new Note(Tones[this.props.noteName], this.props.channel, this.props.ctx, this.props.merger);
   },

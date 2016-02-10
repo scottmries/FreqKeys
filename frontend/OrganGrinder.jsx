@@ -11,10 +11,11 @@ var React = require('react'),
     analyser = ctx.createAnalyser();
     merger = ctx.createChannelMerger(13);
     gainNode = ctx.createGain();
+    bufferLength = analyser.frequencyBinCount;
+    dataArray = new Uint8Array(bufferLength);
+
 merger.connect(analyser);
 analyser.connect(ctx.destination);
-var bufferLength = analyser.frequencyBinCount;
-var dataArray = new Uint8Array(bufferLength);
 analyser.fftSize = 2048;
 
 var OrganGrinder = React.createClass({
