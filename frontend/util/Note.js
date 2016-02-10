@@ -1,8 +1,8 @@
 // util/Note.js
-var ctx = new (window.AudioContext || window.webkitAudioContext)();
+var ctx;
 
 var createOscillator = function (freq) {
-  var osc = ctx.createOscillator();
+  var osc = this.props.ctx.createOscillator();
   osc.type = "triangle";
   osc.frequency.value = freq;
   osc.detune.value = 0;
@@ -10,17 +10,18 @@ var createOscillator = function (freq) {
   return osc;
 };
 
-var createGainNode = function () {
+var createGainNode = function (ctx) {
   var gainNode = ctx.createGain();
   gainNode.gain.value = 0;
-  gainNode.connect(ctx.destination);
+  gainNode.connect(merger);
   return gainNode;
 };
 
-var Note = function (freq) {
+var Note = function (freq, channel, ctx) {
   this.oscillatorNode = createOscillator(freq);
-  this.gainNode = createGainNode();
+  this.gainNode = createGainNode(ctx);
   this.oscillatorNode.connect(this.gainNode);
+  ctx = ctx;
 };
 
 Note.prototype = {

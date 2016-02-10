@@ -51,6 +51,55 @@
 	    Tones = __webpack_require__(160),
 	    Recorder = __webpack_require__(185),
 	    Jukebox = __webpack_require__(188);
+	Waveform = __webpack_require__(191);
+	Oscilloscope = __webpack_require__(192);
+	ctx = new (window.AudioContext || window.webkitAudioContext)();
+	debugger;
+	var analyser = ctx.createAnalyser();
+	var merger = ctx.createChannelMerger(13);
+	var gainNode = ctx.createGain();
+	console.log("ctx", ctx);
+	merger.connect(analyser);
+	analyser.connect(ctx.destination);
+	
+	analyser.fftSize = 2048;
+	var bufferLength = analyser.frequencyBinCount;
+	var dataArray = new Uint8Array(bufferLength);
+	
+	var canvasEl = document.getElementById("oscilloscope");
+	var canvasCtx = canvasEl.getContext("2d");
+	
+	canvasCtx.clearRect(0, 0, WIDTH, HEIGHT);
+	
+	function draw() {
+	  drawVisual = requestAnimationFrame(draw);
+	  analyser.getByteTimeDomainData(dataArray);
+	  canvasCtx.fillStyle = "rgb(200, 200, 200)";
+	  canvasCtx.fillRect(0, 0, WIDTH, HEIGHT);
+	  canvasCtx.lineWidth = 2;
+	  canvasCtx.strokeStyle = "rgb(0, 0, 0)";
+	  canvasCtx.beginPath();
+	  var sliceWidth = WIDTH * 1.0 / bufferLength;
+	  var x = 0;
+	
+	  for (var i = 0; i < bufferLength; i++) {
+	    var v = dataArray[i] / 128.0;
+	    var y = v * HEIGHT / 2;
+	
+	    if (i === 0) {
+	      canvasCtx.moveTo(x, y);
+	    } else {
+	      canvasCtx.lineTo(x, y);
+	    }
+	
+	    x += sliceWidth;
+	  }
+	
+	  canvasCtx.lineTo(canvas.width, canvas.height / 2);
+	  canvasCtx.stroke();
+	}
+	
+	draw();
 	
 	var OrganGrinder = React.createClass({
 	  displayName: 'OrganGrinder',
@@ -69,8 +118,8 @@
 	  },
 	
 	  render: function () {
-	    var keys = Object.keys(Tones).map(function (noteName) {
-	      return React.createElement(Key, { key: noteName, noteName: noteName });
+	    var keys = Object.keys(Tones).map(function (noteName, idx) {
+	      return React.createElement(Key, { key: noteName, noteName: noteName, channel: idx, ctx: ctx });
 	    });
 	
 	    return React.createElement(
@@ -82,7 +131,8 @@
 	        keys,
 	        React.createElement(Recorder, null)
 	      ),
-	      React.createElement(Jukebox, null)
+	      React.createElement(Jukebox, null),
+	      React.createElement(Oscilloscope, { analyser: analyser })
 	    );
 	  }
 	});
@@ -19710,7 +19760,7 @@
 	
 	  componentDidMount: function () {
 	    KeyStore.addListener(this.handleKey);
-	    this.note = new Note(Tones[this.props.noteName]);
+	    this.note = new Note(Tones[this.props.noteName], this.props.channel, this.props.ctx);
 	  },
 	
 	  handleKey: function () {
@@ -19733,6 +19783,7 @@
 	    return React.createElement(
 	      'div',
 	      { className: klass },
+	      '// ',
 	      this.props.noteName
 	    );
 	  }
@@ -19772,10 +19823,10 @@
 /***/ function(module, exports) {
 
 	// util/Note.js
-	var ctx = new (window.AudioContext || window.webkitAudioContext)();
+	var ctx;
 	
 	var createOscillator = function (freq) {
-	  var osc = ctx.createOscillator();
+	  var osc = this.props.ctx.createOscillator();
 	  osc.type = "triangle";
 	  osc.frequency.value = freq;
 	  osc.detune.value = 0;
@@ -19783,17 +19834,18 @@
 	  return osc;
 	};
 	
-	var createGainNode = function () {
+	var createGainNode = function (ctx) {
 	  var gainNode = ctx.createGain();
 	  gainNode.gain.value = 0;
-	  gainNode.connect(ctx.destination);
+	  gainNode.connect(merger);
 	  return gainNode;
 	};
 	
-	var Note = function (freq) {
+	var Note = function (freq, channel, ctx) {
 	  this.oscillatorNode = createOscillator(freq);
-	  this.gainNode = createGainNode();
+	  this.gainNode = createGainNode(ctx);
 	  this.oscillatorNode.connect(this.gainNode);
+	  ctx = ctx;
 	};
 	
 	Note.prototype = {
@@ -26868,6 +26920,75 @@
 	});
 	
 	module.exports = TrackPlayer;
+
+/***/ },
+/* 191 */
+/***/ function(module, exports) {
+
+
+
+/***/ },
+/* 192 */
+/***/ function(module, exports, __webpack_require__) {
+
+	var React = __webpack_require__(1);
+	
+	function setup() {
+	  var canvasEl = document.getElementById("oscilloscope");
+	  var canvasCtx = canvasEl.getContext("2d");
+	
+	  canvasCtx.clearRect(0, 0, WIDTH, HEIGHT);
+	}
+	
+	function draw() {
+	  drawVisual = requestAnimationFrame(draw);
+	  analyser.getByteTimeDomainData(dataArray);
+	  canvasCtx.fillStyle = "rgb(200, 200, 200)";
+	  canvasCtx.fillRect(0, 0, WIDTH, HEIGHT);
+	  canvasCtx.lineWidth = 2;
+	  canvasCtx.strokeStyle = "rgb(0, 0, 0)";
+	  canvasCtx.beginPath();
+	  var sliceWidth = WIDTH * 1.0 / bufferLength;
+	  var x = 0;
+	
+	  for (var i = 0; i < bufferLength; i++) {
+	    var v = dataArray[i] / 128.0;
+	    var y = v * HEIGHT / 2;
+	
+	    if (i === 0) {
+	      canvasCtx.moveTo(x, y);
+	    } else {
+	      canvasCtx.lineTo(x, y);
+	    }
+	
+	    x += sliceWidth;
+	  }
+	
+	  canvasCtx.lineTo(canvas.width, canvas.height / 2);
+	  canvasCtx.stroke();
+	}
+	
+	var Oscilloscope = React.createClass({
+	  displayName: "Oscilloscope",
+	
+	
+	  componentDidMount: function () {
+	    draw();
+	  },
+	
+	  onload: function () {
+	    var canvasEl = document.getElementById("oscilloscope");
+	    var canvasCtx = canvasEl.getContext("2d");
+	
+	    canvasCtx.clearRect(0, 0, WIDTH, HEIGHT);
+	  },
+	
+	  render: function () {
+	    return React.createElement("canvas", { id: "oscilloscope", width: "816px", height: "150px" });
+	  }
+	});
+	
+	module.exports = Oscilloscope;
 
 /***/ }
 /******/ ]);

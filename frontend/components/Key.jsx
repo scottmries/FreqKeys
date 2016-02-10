@@ -10,7 +10,7 @@ var Key = React.createClass({
 
   componentDidMount: function(){
     KeyStore.addListener(this.handleKey);
-    this.note = new Note(Tones[this.props.noteName]);
+    this.note = new Note(Tones[this.props.noteName], this.props.channel, this.props.ctx);
   },
 
   handleKey: function(){
@@ -32,7 +32,7 @@ var Key = React.createClass({
 
     return (
       <div className={klass}>
-        {this.props.noteName}
+        // {this.props.noteName}
       </div>
     );
   }
