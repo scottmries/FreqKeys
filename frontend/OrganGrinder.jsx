@@ -21,21 +21,20 @@ merger.connect(analyser);
 analyser.connect(ctx.destination);
 analyser.fftSize = 2048;
 
-
-var draw = function () {
-  drawVisual = requestAnimationFrame(draw);
-  analyser.getByteTimeDomainData(dataArray);
-};
-
-draw();
-
 var OrganGrinder = React.createClass({
   getInitialState: function(){
-    return { trackName: "", tuning: "equal" };
+    return { trackName: "", tuning: "equal", dataArray: [] };
+  },
+
+  draw: function () {
+    analyser.getByteTimeDomainData(dataArray);
+    this.setState({ dataArray: dataArray });
+    drawVisual = requestAnimationFrame(this.draw);
   },
 
   componentDidMount: function(){
     this.tuningListener = TuningStore.addListener(this.changeTuning);
+    this.draw();
   },
 
   componentWillUnmount: function() {
@@ -44,7 +43,6 @@ var OrganGrinder = React.createClass({
 
   changeTuning: function() {
     this.setState( {tuning: TuningStore.getTuning() });
-    console.log(this.state);
   },
 
   addKeyListeners: function () {
@@ -59,7 +57,6 @@ var OrganGrinder = React.createClass({
 
   render: function () {
     var tuning = this.state.tuning;
-    // console.log("OrganGrinder state tuning", Tones[tuning]);
     var keys = Object.getOwnPropertyNames(Tones[tuning]).map(function (noteName, idx) {
       return <Key key={noteName} noteName={noteName} tuning={Tones[tuning]} channel={idx} ctx={ctx} merger={merger}/>;
     });
@@ -73,7 +70,7 @@ var OrganGrinder = React.createClass({
         </div>
 
         <Jukebox />
-        <Oscilloscope analyser={analyser} dataArray={dataArray}/>
+        <Oscilloscope analyser={analyser} dataArray={this.state.dataArray}/>
       </div>
     );
   }

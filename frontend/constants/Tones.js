@@ -84,7 +84,6 @@ var TONES = {
 //   if (TONES.hasOwnProperty(tuning)){
 //
 //     for (var note in tuning){
-//       console.log(tuning, note);
 //       TONES[tuning][note] = TONES[tuning][note] * 3;
 //     }
 //   }

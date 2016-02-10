@@ -67,22 +67,22 @@
 	analyser.connect(ctx.destination);
 	analyser.fftSize = 2048;
 	
-	var draw = function () {
-	  drawVisual = requestAnimationFrame(draw);
-	  analyser.getByteTimeDomainData(dataArray);
-	};
-	
-	draw();
-	
 	var OrganGrinder = React.createClass({
 	  displayName: 'OrganGrinder',
 	
 	  getInitialState: function () {
-	    return { trackName: "", tuning: "equal" };
+	    return { trackName: "", tuning: "equal", dataArray: [] };
+	  },
+	
+	  draw: function () {
+	    analyser.getByteTimeDomainData(dataArray);
+	    this.setState({ dataArray: dataArray });
+	    drawVisual = requestAnimationFrame(this.draw);
 	  },
 	
 	  componentDidMount: function () {
 	    this.tuningListener = TuningStore.addListener(this.changeTuning);
+	    this.draw();
 	  },
 	
 	  componentWillUnmount: function () {
@@ -91,7 +91,6 @@
 	
 	  changeTuning: function () {
 	    this.setState({ tuning: TuningStore.getTuning() });
-	    console.log(this.state);
 	  },
 	
 	  addKeyListeners: function () {
@@ -105,7 +104,6 @@
 	
 	  render: function () {
 	    var tuning = this.state.tuning;
-	    // console.log("OrganGrinder state tuning", Tones[tuning]);
 	    var keys = Object.getOwnPropertyNames(Tones[tuning]).map(function (noteName, idx) {
 	      return React.createElement(Key, { key: noteName, noteName: noteName, tuning: Tones[tuning], channel: idx, ctx: ctx, merger: merger });
 	    });
@@ -121,7 +119,7 @@
 	        React.createElement(Recorder, null)
 	      ),
 	      React.createElement(Jukebox, null),
-	      React.createElement(Oscilloscope, { analyser: analyser, dataArray: dataArray })
+	      React.createElement(Oscilloscope, { analyser: analyser, dataArray: this.state.dataArray })
 	    );
 	  }
 	});
@@ -19757,7 +19755,6 @@
 	  },
 	
 	  componentWillReceiveProps: function () {
-	    console.log("will call set freq");
 	    this.note.setFrequency(this.props.tuning[this.props.noteName]);
 	  },
 	
@@ -19875,7 +19872,6 @@
 	//   if (TONES.hasOwnProperty(tuning)){
 	//
 	//     for (var note in tuning){
-	//       console.log(tuning, note);
 	//       TONES[tuning][note] = TONES[tuning][note] * 3;
 	//     }
 	//   }
@@ -19919,7 +19915,6 @@
 	Note.prototype = {
 	  start: function () {
 	    this.gainNode.gain.value = 0.7;
-	    console.log(this.oscillatorNode.frequency);
 	  },
 	
 	  stop: function () {
@@ -19927,7 +19922,6 @@
 	  },
 	
 	  setFrequency: function (freq) {
-	    console.log("set freq");
 	    this.oscillatorNode.frequency.value = freq;
 	  }
 	};
@@ -27051,6 +27045,7 @@
 	    // this.props.analyser.getByteTimeDomainData(this.props.dataArray);
 	    // console.log("receive props", this.props);
 	    // console.log("receive props", this.props.dataArray);
+	    console.log(this.props.dataArray);
 	    draw(this.props.analyser, this.canvasCtx, this.props.dataArray);
 	  },
 	

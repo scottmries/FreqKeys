@@ -49,6 +49,7 @@ var Oscilloscope = React.createClass({
     // this.props.analyser.getByteTimeDomainData(this.props.dataArray);
     // console.log("receive props", this.props);
     // console.log("receive props", this.props.dataArray);
+    console.log(this.props.dataArray);
     draw(this.props.analyser, this.canvasCtx, this.props.dataArray);
   },
 

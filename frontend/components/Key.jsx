@@ -19,7 +19,6 @@ var Key = React.createClass({
   },
 
   componentWillReceiveProps: function () {
-    console.log("will call set freq");
     this.note.setFrequency(this.props.tuning[this.props.noteName]);
   },
 

@@ -30,7 +30,6 @@ var Note = function (freq, channel, ctx, merger) {
 Note.prototype = {
   start: function () {
     this.gainNode.gain.value = 0.7;
-    console.log(this.oscillatorNode.frequency);
   },
 
   stop: function () {
@@ -38,7 +37,6 @@ Note.prototype = {
   },
 
   setFrequency: function (freq) {
-    console.log("set freq");
     this.oscillatorNode.frequency.value = freq;
   }
 };
