@@ -50,25 +50,48 @@
 	    KeyListeners = __webpack_require__(182),
 	    Tones = __webpack_require__(160),
 	    Recorder = __webpack_require__(185),
-	    Jukebox = __webpack_require__(188);
-	Waveform = __webpack_require__(191);
-	Oscilloscope = __webpack_require__(192);
-	ctx = new (window.AudioContext || window.webkitAudioContext)();
-	analyser = ctx.createAnalyser();
-	merger = ctx.createChannelMerger(13);
-	gainNode = ctx.createGain();
-	bufferLength = analyser.frequencyBinCount;
-	dataArray = new Uint8Array(bufferLength);
+	    Jukebox = __webpack_require__(188),
+	    Waveform = __webpack_require__(191),
+	    Oscilloscope = __webpack_require__(192),
+	    Tuner = __webpack_require__(193),
+	    ctx = new (window.AudioContext || window.webkitAudioContext)(),
+	    analyser = ctx.createAnalyser(),
+	    merger = ctx.createChannelMerger(13),
+	    gainNode = ctx.createGain(),
+	    bufferLength = analyser.frequencyBinCount,
+	    dataArray = new Uint8Array(bufferLength),
+	    TuningStore = __webpack_require__(194);
 	
+	analyser.getByteTimeDomainData(dataArray);
 	merger.connect(analyser);
 	analyser.connect(ctx.destination);
 	analyser.fftSize = 2048;
+	
+	var draw = function () {
+	  drawVisual = requestAnimationFrame(draw);
+	  analyser.getByteTimeDomainData(dataArray);
+	};
+	
+	draw();
 	
 	var OrganGrinder = React.createClass({
 	  displayName: 'OrganGrinder',
 	
 	  getInitialState: function () {
-	    return { trackName: "" };
+	    return { trackName: "", tuning: "equal" };
+	  },
+	
+	  componentDidMount: function () {
+	    this.tuningListener = TuningStore.addListener(this.changeTuning);
+	  },
+	
+	  componentWillUnmount: function () {
+	    this.tuningListener.remove();
+	  },
+	
+	  changeTuning: function () {
+	    this.setState({ tuning: TuningStore.getTuning() });
+	    console.log(this.state);
 	  },
 	
 	  addKeyListeners: function () {
@@ -81,13 +104,16 @@
 	  },
 	
 	  render: function () {
-	    var keys = Object.keys(Tones).map(function (noteName, idx) {
-	      return React.createElement(Key, { key: noteName, noteName: noteName, channel: idx, ctx: ctx, merger: merger });
+	    var tuning = this.state.tuning;
+	    // console.log("OrganGrinder state tuning", Tones[tuning]);
+	    var keys = Object.getOwnPropertyNames(Tones[tuning]).map(function (noteName, idx) {
+	      return React.createElement(Key, { key: noteName, noteName: noteName, tuning: Tones[tuning], channel: idx, ctx: ctx, merger: merger });
 	    });
 	
 	    return React.createElement(
 	      'div',
 	      null,
+	      React.createElement(Tuner, { change: this.changeTuning, val: this.state.tuning }),
 	      React.createElement(
 	        'div',
 	        { tabIndex: '0', onFocus: this.addKeyListeners, onBlur: this.removeKeyListeners, className: 'keys group' },
@@ -19718,13 +19744,21 @@
 	  displayName: 'Key',
 	
 	  getInitialState: function () {
-	    return { pressed: "" };
+	    return { pressed: "", tuning: "equal" };
 	  },
 	
 	  componentDidMount: function () {
-	    console.log(this.props.noteName, this.props.channel, this.props.merger);
-	    KeyStore.addListener(this.handleKey);
-	    this.note = new Note(Tones[this.props.noteName], this.props.channel, this.props.ctx, this.props.merger);
+	    this.keyListener = KeyStore.addListener(this.handleKey);
+	    this.note = new Note(this.props.tuning[this.props.noteName], this.props.channel, this.props.ctx, this.props.merger);
+	  },
+	
+	  componentWillUnmount: function () {
+	    this.keyListener.remove();
+	  },
+	
+	  componentWillReceiveProps: function () {
+	    console.log("will call set freq");
+	    this.note.setFrequency(this.props.tuning[this.props.noteName]);
 	  },
 	
 	  handleKey: function () {
@@ -19756,24 +19790,96 @@
 /***/ function(module, exports) {
 
 	var TONES = {
-	  "C3": 130.81,
-	  "CS3": 138.59,
-	  "D3": 146.83,
-	  "DS3": 155.56,
-	  "E3": 164.81,
-	  "F3": 174.61,
-	  "FS3": 185.00,
-	  "G3": 196.00,
-	  "GS3": 207.65,
-	  "A3": 220.00,
-	  "AS3": 233.08,
-	  "B3": 246.94,
-	  "C4": 261.63
+	  "equal": {
+	    "C3": 130.81,
+	    "CS3": 138.59,
+	    "D3": 146.83,
+	    "DS3": 155.56,
+	    "E3": 164.81,
+	    "F3": 174.61,
+	    "FS3": 185.00,
+	    "G3": 196.00,
+	    "GS3": 207.65,
+	    "A3": 220.00,
+	    "AS3": 233.08,
+	    "B3": 246.94,
+	    "C4": 261.63
+	  },
+	
+	  "pythagorean": {
+	    "C3": 130,
+	    "CS3": 130,
+	    "D3": 130 * 9 / 8,
+	    "DS3": 130 * 9 / 8,
+	    "E3": 130 * 81 / 64,
+	    "F3": 130 * 4 / 3,
+	    "FS3": 130 * 4 / 3,
+	    "G3": 130 * 3 / 2,
+	    "GS3": 130 * 3 / 2,
+	    "A3": 130 * 27 / 16,
+	    "AS3": 130 * 27 / 16,
+	    "B3": 130 * 243 / 128,
+	    "C4": 130 * 2
+	  },
+	
+	  "correct": {
+	    "C3": 130,
+	    "CS3": 130 * 256 / 243,
+	    "D3": 130 * 64 / 81 * Math.sqrt(2),
+	    "DS3": 130 * 32 / 27,
+	    "E3": 130 * 256 / 243 * Math.pow(2, 0.25),
+	    "F3": 130 * 4 / 3,
+	    "FS3": 130 * 1024 / 729,
+	    "G3": 130 * 8 / 9 * Math.pow(8, 0.25),
+	    "GS3": 130 * 128 / 81,
+	    "A3": 130 * 1024 / 729 * Math.pow(2, 0.25),
+	    "AS3": 130 * 16 / 9,
+	    "B3": 130 * 128 / 81 * Math.pow(2, 0.25),
+	    "C4": 130 * 2
+	  },
+	
+	  "well": {
+	    "C3": 130,
+	    "CS3": 130 * 567 / 512,
+	    "D3": 130 * 9 / 8,
+	    "DS3": 130 * 147 / 128,
+	    "E3": 130 * 21 / 26,
+	    "F3": 130 * 1323 / 1024,
+	    "FS3": 130 * 189 / 128,
+	    "G3": 130 * 3 / 2,
+	    "GS3": 130 * 49 / 32,
+	    "A3": 130 * 7 / 4,
+	    "AS3": 130 * 441 / 256,
+	    "B3": 130 * 63 / 32,
+	    "C4": 130 * 2
+	  },
+	
+	  "limit": {
+	    "C3": 130,
+	    "CS3": 130 * 16 / 15,
+	    "D3": 130 * 9 / 8,
+	    "DS3": 130 * 6 / 5,
+	    "E3": 130 * 5 / 4,
+	    "F3": 130 * 4 / 3,
+	    "FS3": 130 * 45 / 32,
+	    "G3": 130 * 3 / 2,
+	    "GS3": 130 * 8 / 5,
+	    "A3": 130 * 5 / 3,
+	    "AS3": 130 * 9 / 5,
+	    "B3": 130 * 15 / 8,
+	    "C4": 130 * 2
+	  }
 	};
 	
-	for (var note in TONES) {
-	  TONES[note] = TONES[note] * 3;
-	}
+	// for(var tuning in TONES) {
+	//   if (TONES.hasOwnProperty(tuning)){
+	//
+	//     for (var note in tuning){
+	//       console.log(tuning, note);
+	//       TONES[tuning][note] = TONES[tuning][note] * 3;
+	//     }
+	//   }
+	// }
 	
 	module.exports = TONES;
 
@@ -19795,7 +19901,6 @@
 	
 	var createGainNode = function (ctx, channel, merger) {
 	  var gainNode = ctx.createGain();
-	  console.log(gainNode);
 	  gainNode.gain.value = 0;
 	  gainNode.connect(merger, 0, channel % 2);
 	  gainNode.connect(merger, 0, (channel + 1) % 2);
@@ -19808,17 +19913,22 @@
 	  this.gainNode = createGainNode(ctx, channel, merger);
 	  this.oscillatorNode.connect(this.gainNode);
 	  this.gainNode.connect(merger, 0, channel % 2);
-	  console.log(this.oscillatorNode);
 	  ctx = ctx;
 	};
 	
 	Note.prototype = {
 	  start: function () {
 	    this.gainNode.gain.value = 0.7;
+	    console.log(this.oscillatorNode.frequency);
 	  },
 	
 	  stop: function () {
 	    this.gainNode.gain.value = 0;
+	  },
+	
+	  setFrequency: function (freq) {
+	    console.log("set freq");
+	    this.oscillatorNode.frequency.value = freq;
 	  }
 	};
 	
@@ -26825,9 +26935,8 @@
 
 	var Store = __webpack_require__(163).Store,
 	    AppDispatcher = __webpack_require__(179);
-	
-	var TrackStore = new Store(AppDispatcher);
-	var _tracks = [];
+	TrackStore = new Store(AppDispatcher);
+	_tracks = [];
 	
 	TrackStore.all = function () {
 	  return _tracks.slice();
@@ -26929,16 +27038,20 @@
 	
 	
 	  componentDidMount: function () {
+	    // console.log("mount", this.props.dataArray);
+	    // this.props.analyser.getByteTimeDomainData(this.props.dataArray);
 	    this.canvasEl = document.getElementById("oscilloscope");
-	    var canvasCtx = this.canvasEl.getContext("2d");
-	
-	    canvasCtx.clearRect(0, 0, WIDTH, HEIGHT);
-	    draw(this.props.analyser, canvasCtx, this.props.dataArray);
+	    this.canvasCtx = this.canvasEl.getContext("2d");
+	    console.log(this.canvasCtx);
+	    this.canvasCtx.clearRect(0, 0, WIDTH, HEIGHT);
+	    draw(this.props.analyser, this.canvasCtx, this.props.dataArray);
 	  },
 	
 	  componentWillReceiveProps: function () {
-	    console.log(this.props.dataArray);
-	    draw(this.props.analyser, canvasCtx, this.props.dataArray);
+	    // this.props.analyser.getByteTimeDomainData(this.props.dataArray);
+	    // console.log("receive props", this.props);
+	    // console.log("receive props", this.props.dataArray);
+	    draw(this.props.analyser, this.canvasCtx, this.props.dataArray);
 	  },
 	
 	  render: function () {
@@ -26947,6 +27060,110 @@
 	});
 	
 	module.exports = Oscilloscope;
+
+/***/ },
+/* 193 */
+/***/ function(module, exports, __webpack_require__) {
+
+	var React = __webpack_require__(1);
+	var TuningActions = __webpack_require__(195);
+	
+	var Tuner = React.createClass({
+	  displayName: 'Tuner',
+	
+	
+	  getInitialState: function () {
+	    return { value: "equal" };
+	  },
+	
+	  handleChange: function (e) {
+	    // debugger
+	    TuningActions.tuningChanged(e.currentTarget.value);
+	  },
+	
+	  render: function () {
+	    return React.createElement(
+	      'div',
+	      { className: 'tuner' },
+	      React.createElement(
+	        'select',
+	        { name: 'select', onChange: this.handleChange, value: this.props.tuning },
+	        React.createElement(
+	          'option',
+	          { value: 'equal', selected: 'selected' },
+	          'Equal Temperament (standard)'
+	        ),
+	        React.createElement(
+	          'option',
+	          { value: 'pythagorean' },
+	          'Pythagorean Tuning'
+	        ),
+	        React.createElement(
+	          'option',
+	          { value: 'correct' },
+	          'Correct Temperament (Werckmeister)'
+	        ),
+	        React.createElement(
+	          'option',
+	          { value: 'well' },
+	          'Well Tuning (Young)'
+	        ),
+	        React.createElement(
+	          'option',
+	          { value: 'limit' },
+	          '5-Limit'
+	        )
+	      )
+	    );
+	  }
+	});
+	
+	module.exports = Tuner;
+
+/***/ },
+/* 194 */
+/***/ function(module, exports, __webpack_require__) {
+
+	var Store = __webpack_require__(163).Store,
+	    AppDispatcher = __webpack_require__(179),
+	    TuningStore = new Store(AppDispatcher),
+	    _tuning = "";
+	
+	TuningStore.setTuning = function (tuning) {
+	  _tuning = tuning;
+	  TuningStore.__emitChange();
+	};
+	
+	TuningStore.getTuning = function () {
+	  return _tuning + "";
+	};
+	
+	TuningStore.__onDispatch = function (payload) {
+	  switch (payload.actionType) {
+	    case "tuningChanged":
+	      this.setTuning(payload.tuning);
+	      break;
+	  }
+	};
+	
+	module.exports = TuningStore;
+
+/***/ },
+/* 195 */
+/***/ function(module, exports, __webpack_require__) {
+
+	var AppDispatcher = __webpack_require__(179);
+	
+	var TuningActions = {
+	  tuningChanged: function (tuning) {
+	    AppDispatcher.dispatch({
+	      actionType: "tuningChanged",
+	      tuning: tuning
+	    });
+	  }
+	};
+	
+	module.exports = TuningActions;
 
 /***/ }
 /******/ ]);

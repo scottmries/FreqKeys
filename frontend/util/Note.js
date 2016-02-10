@@ -12,7 +12,6 @@ var createOscillator = function (freq, ctx) {
 
 var createGainNode = function (ctx, channel, merger) {
   var gainNode = ctx.createGain();
-  console.log(gainNode);
   gainNode.gain.value = 0;
   gainNode.connect(merger, 0, channel % 2);
   gainNode.connect(merger, 0, (channel + 1) % 2 );
@@ -25,17 +24,22 @@ var Note = function (freq, channel, ctx, merger) {
   this.gainNode = createGainNode(ctx, channel, merger);
   this.oscillatorNode.connect(this.gainNode);
   this.gainNode.connect(merger, 0, channel % 2);
-  console.log(this.oscillatorNode);
   ctx = ctx;
 };
 
 Note.prototype = {
   start: function () {
     this.gainNode.gain.value = 0.7;
+    console.log(this.oscillatorNode.frequency);
   },
 
   stop: function () {
     this.gainNode.gain.value = 0;
+  },
+
+  setFrequency: function (freq) {
+    console.log("set freq");
+    this.oscillatorNode.frequency.value = freq;
   }
 };
 

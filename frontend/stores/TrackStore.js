@@ -1,8 +1,7 @@
 var Store = require('flux/utils').Store,
     AppDispatcher = require('../dispatcher/dispatcher.js');
-
-var TrackStore = new Store(AppDispatcher);
-var _tracks = [];
+    TrackStore = new Store(AppDispatcher);
+    _tracks = [];
 
 TrackStore.all = function () {
   return _tracks.slice();

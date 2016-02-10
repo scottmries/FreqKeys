@@ -3,15 +3,24 @@ var React = require('react'),
     Note = require('../util/Note.js'),
     KeyStore = require('../stores/KeyStore');
 
+
 var Key = React.createClass({
   getInitialState: function () {
-    return { pressed: "" };
+    return { pressed: "", tuning: "equal" };
   },
 
   componentDidMount: function(){
-    console.log(this.props.noteName, this.props.channel, this.props.merger);
-    KeyStore.addListener(this.handleKey);
-    this.note = new Note(Tones[this.props.noteName], this.props.channel, this.props.ctx, this.props.merger);
+    this.keyListener = KeyStore.addListener(this.handleKey);
+    this.note = new Note(this.props.tuning[this.props.noteName], this.props.channel, this.props.ctx, this.props.merger);
+  },
+
+  componentWillUnmount: function () {
+    this.keyListener.remove();
+  },
+
+  componentWillReceiveProps: function () {
+    console.log("will call set freq");
+    this.note.setFrequency(this.props.tuning[this.props.noteName]);
   },
 
   handleKey: function(){

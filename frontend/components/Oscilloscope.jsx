@@ -5,6 +5,9 @@ var HEIGHT = 150;
 
 function draw(analyser, canvasCtx, dataArray) {
 
+
+
+
   canvasCtx.fillStyle = "rgb(200, 200, 200)";
   canvasCtx.fillRect(0, 0, WIDTH, HEIGHT);
   canvasCtx.lineWidth = 2;
@@ -33,16 +36,20 @@ function draw(analyser, canvasCtx, dataArray) {
 var Oscilloscope = React.createClass({
 
   componentDidMount: function () {
+    // console.log("mount", this.props.dataArray);
+    // this.props.analyser.getByteTimeDomainData(this.props.dataArray);
     this.canvasEl = document.getElementById("oscilloscope");
-    var canvasCtx = this.canvasEl.getContext("2d");
-
-    canvasCtx.clearRect(0, 0, WIDTH, HEIGHT);
-    draw(this.props.analyser, canvasCtx, this.props.dataArray);
+    this.canvasCtx = this.canvasEl.getContext("2d");
+    console.log(this.canvasCtx);
+    this.canvasCtx.clearRect(0, 0, WIDTH, HEIGHT);
+    draw(this.props.analyser, this.canvasCtx, this.props.dataArray);
   },
 
   componentWillReceiveProps: function () {
-    console.log(this.props.dataArray);
-    draw(this.props.analyser, canvasCtx, this.props.dataArray);
+    // this.props.analyser.getByteTimeDomainData(this.props.dataArray);
+    // console.log("receive props", this.props);
+    // console.log("receive props", this.props.dataArray);
+    draw(this.props.analyser, this.canvasCtx, this.props.dataArray);
   },
 
   render: function () {
