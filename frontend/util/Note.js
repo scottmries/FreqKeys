@@ -1,8 +1,8 @@
 // util/Note.js
 var ctx;
 
-var createOscillator = function (freq) {
-  var osc = this.props.ctx.createOscillator();
+var createOscillator = function (freq, ctx) {
+  var osc = ctx.createOscillator();
   osc.type = "triangle";
   osc.frequency.value = freq;
   osc.detune.value = 0;
@@ -10,16 +10,16 @@ var createOscillator = function (freq) {
   return osc;
 };
 
-var createGainNode = function (ctx) {
+var createGainNode = function (ctx, channel, merger) {
   var gainNode = ctx.createGain();
   gainNode.gain.value = 0;
-  gainNode.connect(merger);
+  gainNode.connect(merger, 0, channel);
   return gainNode;
 };
 
-var Note = function (freq, channel, ctx) {
-  this.oscillatorNode = createOscillator(freq);
-  this.gainNode = createGainNode(ctx);
+var Note = function (freq, channel, ctx, merger) {
+  this.oscillatorNode = createOscillator(freq, ctx);
+  this.gainNode = createGainNode(ctx, channel, merger);
   this.oscillatorNode.connect(this.gainNode);
   ctx = ctx;
 };

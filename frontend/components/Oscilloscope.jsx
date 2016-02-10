@@ -1,25 +1,18 @@
 var React = require('react');
 
-function setup() {
-  var canvasEl = document.getElementById("oscilloscope");
-  var canvasCtx = canvasEl.getContext("2d");
+var WIDTH = 816;
+var HEIGHT = 150;
 
-  canvasCtx.clearRect(0, 0, WIDTH, HEIGHT);
-}
+function draw(analyser, canvasCtx, dataArray) {
 
-
-
-function draw() {
-  drawVisual = requestAnimationFrame(draw);
-  analyser.getByteTimeDomainData(dataArray);
   canvasCtx.fillStyle = "rgb(200, 200, 200)";
   canvasCtx.fillRect(0, 0, WIDTH, HEIGHT);
   canvasCtx.lineWidth = 2;
   canvasCtx.strokeStyle = "rgb(0, 0, 0)";
   canvasCtx.beginPath();
+  var bufferLength = analyser.frequencyBinCount;
   var sliceWidth = WIDTH * 1.0 / bufferLength;
   var x = 0;
-
   for (var i = 0; i < bufferLength; i++){
     var v = dataArray[i] / 128.0;
     var y = v * HEIGHT / 2;
@@ -33,23 +26,25 @@ function draw() {
     x += sliceWidth;
   }
 
-  canvasCtx.lineTo(canvas.width, canvas.height / 2);
+  canvasCtx.lineTo(WIDTH, HEIGHT / 2);
   canvasCtx.stroke();
 }
 
 var Oscilloscope = React.createClass({
 
   componentDidMount: function () {
-    draw();
-  },
-
-  onload: function () {
-    var canvasEl = document.getElementById("oscilloscope");
-    var canvasCtx = canvasEl.getContext("2d");
+    this.canvasEl = document.getElementById("oscilloscope");
+    var canvasCtx = this.canvasEl.getContext("2d");
 
     canvasCtx.clearRect(0, 0, WIDTH, HEIGHT);
+    draw(this.props.analyser, canvasCtx, this.props.dataArray);
   },
-  
+
+  componentWillReceiveProps: function () {
+    console.log(this.props.dataArray);
+    draw(this.props.analyser, canvasCtx, this.props.dataArray);
+  },
+
   render: function () {
     return <canvas id="oscilloscope" width="816px" height="150px"></canvas>;
   }

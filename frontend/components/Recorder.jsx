@@ -9,7 +9,6 @@ var Recorder = React.createClass({
   },
 
   updateTrackName: function(e){
-    console.log(e.target.value);
     this.setState({ name: e.target.value });
   },
 
