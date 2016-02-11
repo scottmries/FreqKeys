@@ -1,17 +1,13 @@
 var React = require('react');
 
-var WIDTH = 816;
-var HEIGHT = 150;
+var WIDTH = 800;
+var HEIGHT = 300;
 
-function draw(analyser, canvasCtx, dataArray) {
-
-
-
-
-  canvasCtx.fillStyle = "rgb(200, 200, 200)";
+function draw(analyser, canvasCtx, dataArray, color1, color2) {
+  canvasCtx.fillStyle = "rgb(" + color1[0] + ", " + color1[1] + ", " + color1[2] + ")";
   canvasCtx.fillRect(0, 0, WIDTH, HEIGHT);
-  canvasCtx.lineWidth = 2;
-  canvasCtx.strokeStyle = "rgb(0, 0, 0)";
+  canvasCtx.lineWidth = 10;
+  canvasCtx.strokeStyle = "rgb(" + color2[0] + ", " + color2[1] + ", " + color2[2] + ")";
   canvasCtx.beginPath();
   var bufferLength = analyser.frequencyBinCount;
   var sliceWidth = WIDTH * 1.0 / bufferLength;
@@ -36,25 +32,33 @@ function draw(analyser, canvasCtx, dataArray) {
 var Oscilloscope = React.createClass({
 
   componentDidMount: function () {
-    // console.log("mount", this.props.dataArray);
-    // this.props.analyser.getByteTimeDomainData(this.props.dataArray);
     this.canvasEl = document.getElementById("oscilloscope");
     this.canvasCtx = this.canvasEl.getContext("2d");
-    console.log(this.canvasCtx);
     this.canvasCtx.clearRect(0, 0, WIDTH, HEIGHT);
-    draw(this.props.analyser, this.canvasCtx, this.props.dataArray);
+    draw(this.props.analyser,
+      this.canvasCtx,
+      this.props.dataArray,
+      this.props.color1,
+      this.props.color2
+    );
   },
 
   componentWillReceiveProps: function () {
     // this.props.analyser.getByteTimeDomainData(this.props.dataArray);
-    // console.log("receive props", this.props);
-    // console.log("receive props", this.props.dataArray);
-    console.log(this.props.dataArray);
-    draw(this.props.analyser, this.canvasCtx, this.props.dataArray);
+    draw(this.props.analyser,
+      this.canvasCtx,
+      this.props.dataArray,
+      this.props.color1,
+      this.props.color2
+    );
   },
 
   render: function () {
-    return <canvas id="oscilloscope" width="816px" height="150px"></canvas>;
+    return (
+      <div className="absolute-position-behind">
+        <canvas id="oscilloscope" width={WIDTH} height={HEIGHT}></canvas>
+      </div>
+    )
   }
 });
 

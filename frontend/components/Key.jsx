@@ -1,7 +1,8 @@
 var React = require('react'),
     Tones = require('../constants/Tones'),
     Note = require('../util/Note.js'),
-    KeyStore = require('../stores/KeyStore');
+    KeyStore = require('../stores/KeyStore'),
+    Mapping = require('../constants/Mapping');
 
 
 var Key = React.createClass({
@@ -20,6 +21,7 @@ var Key = React.createClass({
 
   componentWillReceiveProps: function () {
     this.note.setFrequency(this.props.tuning[this.props.noteName]);
+    this.note.setWaveform(this.props.waveform);
   },
 
   handleKey: function(){
@@ -38,9 +40,17 @@ var Key = React.createClass({
 
   render: function(){
     var klass = "key " + this.props.noteName + " " + this.state.pressed;
-
+    var controlKey;
+    for (var prop in Mapping){
+      if (Mapping.hasOwnProperty(prop)){
+        if (Mapping[prop] === this.props.noteName){
+          controlKey = String.fromCharCode(prop);
+        }
+      }
+    }
     return (
       <div className={klass}>
+        {controlKey}
       </div>
     );
   }

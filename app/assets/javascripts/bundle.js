@@ -54,13 +54,9 @@
 	    Waveform = __webpack_require__(191),
 	    Oscilloscope = __webpack_require__(192),
 	    Tuner = __webpack_require__(193),
-	    ctx = new (window.AudioContext || window.webkitAudioContext)(),
-	    analyser = ctx.createAnalyser(),
-	    merger = ctx.createChannelMerger(13),
-	    gainNode = ctx.createGain(),
-	    bufferLength = analyser.frequencyBinCount,
-	    dataArray = new Uint8Array(bufferLength),
-	    TuningStore = __webpack_require__(194);
+	    WaveformSelector = __webpack_require__(196),
+	    WaveformStore = __webpack_require__(202);
+	ctx = new (window.AudioContext || window.webkitAudioContext)(), analyser = ctx.createAnalyser(), merger = ctx.createChannelMerger(13), gainNode = ctx.createGain(), bufferLength = analyser.frequencyBinCount, dataArray = new Uint8Array(bufferLength), TuningStore = __webpack_require__(194), ColorStore = __webpack_require__(198), ColorActions = __webpack_require__(200), Color = __webpack_require__(197);
 	
 	analyser.getByteTimeDomainData(dataArray);
 	merger.connect(analyser);
@@ -71,26 +67,43 @@
 	  displayName: 'OrganGrinder',
 	
 	  getInitialState: function () {
-	    return { trackName: "", tuning: "equal", dataArray: [] };
+	    return { trackName: "", tuning: "equal", dataArray: [], color: new Color([255, 255, 255]), waveform: "triangle" };
 	  },
 	
 	  draw: function () {
 	    analyser.getByteTimeDomainData(dataArray);
 	    this.setState({ dataArray: dataArray });
+	    var data = this.state.dataArray;
+	    // var color = new Color([(2 * data[0]) % 256, (3 * data[data.length/4]) % 256, (5* data[data.length/2]) % 256]);
+	    var color = new Color([data[0] * 10 % 255, data[data.length / 4] * 13 % 256, data[data.length / 2] * 17 % 256]);
+	    ColorActions.colorChanged(color);
 	    drawVisual = requestAnimationFrame(this.draw);
+	    // var color = new Color([0, 128, 256]);
 	  },
 	
 	  componentDidMount: function () {
 	    this.tuningListener = TuningStore.addListener(this.changeTuning);
+	    this.colorListener = ColorStore.addListener(this.changeColor);
+	    this.waveformListener = WaveformStore.addListener(this.changeWaveform);
 	    this.draw();
 	  },
 	
 	  componentWillUnmount: function () {
 	    this.tuningListener.remove();
+	    this.colorListener.remove();
+	    this.waveformListener.remove();
 	  },
 	
 	  changeTuning: function () {
 	    this.setState({ tuning: TuningStore.getTuning() });
+	  },
+	
+	  changeColor: function () {
+	    this.setState({ color: ColorStore.getColor() });
+	  },
+	
+	  changeWaveform: function () {
+	    this.setState({ waveform: WaveformStore.waveform() });
 	  },
 	
 	  addKeyListeners: function () {
@@ -103,23 +116,38 @@
 	  },
 	
 	  render: function () {
+	    var color1 = this.state.color.color.value;
+	    var color2 = this.state.color.splitComplements[0];
+	    var color3 = this.state.color.splitComplements[1];
+	    var data = this.state.dataArray;
 	    var tuning = this.state.tuning;
+	    var waveform = this.state.waveform;
 	    var keys = Object.getOwnPropertyNames(Tones[tuning]).map(function (noteName, idx) {
-	      return React.createElement(Key, { key: noteName, noteName: noteName, tuning: Tones[tuning], channel: idx, ctx: ctx, merger: merger });
+	      return React.createElement(Key, { key: noteName, noteName: noteName, tuning: Tones[tuning], channel: idx, ctx: ctx, merger: merger, waveform: waveform });
 	    });
 	
 	    return React.createElement(
 	      'div',
-	      null,
-	      React.createElement(Tuner, { change: this.changeTuning, val: this.state.tuning }),
+	      { className: 'content' },
+	      React.createElement(
+	        'div',
+	        { className: 'controls group' },
+	        React.createElement(Tuner, { change: this.changeTuning, val: this.state.tuning }),
+	        React.createElement(WaveformSelector, null)
+	      ),
 	      React.createElement(
 	        'div',
 	        { tabIndex: '0', onFocus: this.addKeyListeners, onBlur: this.removeKeyListeners, className: 'keys group' },
 	        keys,
+	        React.createElement(Oscilloscope, {
+	          analyser: analyser,
+	          dataArray: this.state.dataArray,
+	          color1: color1,
+	          color2: color3
+	        }),
 	        React.createElement(Recorder, null)
 	      ),
-	      React.createElement(Jukebox, null),
-	      React.createElement(Oscilloscope, { analyser: analyser, dataArray: this.state.dataArray })
+	      React.createElement(Jukebox, null)
 	    );
 	  }
 	});
@@ -19736,7 +19764,8 @@
 	var React = __webpack_require__(1),
 	    Tones = __webpack_require__(160),
 	    Note = __webpack_require__(161),
-	    KeyStore = __webpack_require__(162);
+	    KeyStore = __webpack_require__(162),
+	    Mapping = __webpack_require__(184);
 	
 	var Key = React.createClass({
 	  displayName: 'Key',
@@ -19756,6 +19785,7 @@
 	
 	  componentWillReceiveProps: function () {
 	    this.note.setFrequency(this.props.tuning[this.props.noteName]);
+	    this.note.setWaveform(this.props.waveform);
 	  },
 	
 	  handleKey: function () {
@@ -19774,8 +19804,19 @@
 	
 	  render: function () {
 	    var klass = "key " + this.props.noteName + " " + this.state.pressed;
-	
-	    return React.createElement('div', { className: klass });
+	    var controlKey;
+	    for (var prop in Mapping) {
+	      if (Mapping.hasOwnProperty(prop)) {
+	        if (Mapping[prop] === this.props.noteName) {
+	          controlKey = String.fromCharCode(prop);
+	        }
+	      }
+	    }
+	    return React.createElement(
+	      'div',
+	      { className: klass },
+	      controlKey
+	    );
 	  }
 	
 	});
@@ -19840,7 +19881,7 @@
 	    "CS3": 130 * 567 / 512,
 	    "D3": 130 * 9 / 8,
 	    "DS3": 130 * 147 / 128,
-	    "E3": 130 * 21 / 26,
+	    "E3": 130 * 21 / 16,
 	    "F3": 130 * 1323 / 1024,
 	    "FS3": 130 * 189 / 128,
 	    "G3": 130 * 3 / 2,
@@ -19923,6 +19964,10 @@
 	
 	  setFrequency: function (freq) {
 	    this.oscillatorNode.frequency.value = freq;
+	  },
+	
+	  setWaveform: function (waveform) {
+	    this.oscillatorNode.type = waveform;
 	  }
 	};
 	
@@ -26997,15 +27042,14 @@
 
 	var React = __webpack_require__(1);
 	
-	var WIDTH = 816;
-	var HEIGHT = 150;
+	var WIDTH = 800;
+	var HEIGHT = 300;
 	
-	function draw(analyser, canvasCtx, dataArray) {
-	
-	  canvasCtx.fillStyle = "rgb(200, 200, 200)";
+	function draw(analyser, canvasCtx, dataArray, color1, color2) {
+	  canvasCtx.fillStyle = "rgb(" + color1[0] + ", " + color1[1] + ", " + color1[2] + ")";
 	  canvasCtx.fillRect(0, 0, WIDTH, HEIGHT);
-	  canvasCtx.lineWidth = 2;
-	  canvasCtx.strokeStyle = "rgb(0, 0, 0)";
+	  canvasCtx.lineWidth = 10;
+	  canvasCtx.strokeStyle = "rgb(" + color2[0] + ", " + color2[1] + ", " + color2[2] + ")";
 	  canvasCtx.beginPath();
 	  var bufferLength = analyser.frequencyBinCount;
 	  var sliceWidth = WIDTH * 1.0 / bufferLength;
@@ -27032,25 +27076,23 @@
 	
 	
 	  componentDidMount: function () {
-	    // console.log("mount", this.props.dataArray);
-	    // this.props.analyser.getByteTimeDomainData(this.props.dataArray);
 	    this.canvasEl = document.getElementById("oscilloscope");
 	    this.canvasCtx = this.canvasEl.getContext("2d");
-	    console.log(this.canvasCtx);
 	    this.canvasCtx.clearRect(0, 0, WIDTH, HEIGHT);
-	    draw(this.props.analyser, this.canvasCtx, this.props.dataArray);
+	    draw(this.props.analyser, this.canvasCtx, this.props.dataArray, this.props.color1, this.props.color2);
 	  },
 	
 	  componentWillReceiveProps: function () {
 	    // this.props.analyser.getByteTimeDomainData(this.props.dataArray);
-	    // console.log("receive props", this.props);
-	    // console.log("receive props", this.props.dataArray);
-	    console.log(this.props.dataArray);
-	    draw(this.props.analyser, this.canvasCtx, this.props.dataArray);
+	    draw(this.props.analyser, this.canvasCtx, this.props.dataArray, this.props.color1, this.props.color2);
 	  },
 	
 	  render: function () {
-	    return React.createElement("canvas", { id: "oscilloscope", width: "816px", height: "150px" });
+	    return React.createElement(
+	      "div",
+	      { className: "absolute-position-behind" },
+	      React.createElement("canvas", { id: "oscilloscope", width: WIDTH, height: HEIGHT })
+	    );
 	  }
 	});
 	
@@ -27081,32 +27123,41 @@
 	      'div',
 	      { className: 'tuner' },
 	      React.createElement(
-	        'select',
-	        { name: 'select', onChange: this.handleChange, value: this.props.tuning },
+	        'h3',
+	        null,
+	        'Tuning'
+	      ),
+	      React.createElement(
+	        'div',
+	        { className: 'select-container' },
 	        React.createElement(
-	          'option',
-	          { value: 'equal', selected: 'selected' },
-	          'Equal Temperament (standard)'
-	        ),
-	        React.createElement(
-	          'option',
-	          { value: 'pythagorean' },
-	          'Pythagorean Tuning'
-	        ),
-	        React.createElement(
-	          'option',
-	          { value: 'correct' },
-	          'Correct Temperament (Werckmeister)'
-	        ),
-	        React.createElement(
-	          'option',
-	          { value: 'well' },
-	          'Well Tuning (Young)'
-	        ),
-	        React.createElement(
-	          'option',
-	          { value: 'limit' },
-	          '5-Limit'
+	          'select',
+	          { name: 'select', onChange: this.handleChange, value: this.props.tuning },
+	          React.createElement(
+	            'option',
+	            { value: 'equal', selected: 'selected' },
+	            'Equal Temperament (standard)'
+	          ),
+	          React.createElement(
+	            'option',
+	            { value: 'pythagorean' },
+	            'Pythagorean Tuning'
+	          ),
+	          React.createElement(
+	            'option',
+	            { value: 'correct' },
+	            'Correct Temperament (Werckmeister)'
+	          ),
+	          React.createElement(
+	            'option',
+	            { value: 'well' },
+	            'Well Tuning (Young)'
+	          ),
+	          React.createElement(
+	            'option',
+	            { value: 'limit' },
+	            '5-Limit'
+	          )
 	        )
 	      )
 	    );
@@ -27159,6 +27210,461 @@
 	};
 	
 	module.exports = TuningActions;
+
+/***/ },
+/* 196 */
+/***/ function(module, exports, __webpack_require__) {
+
+	var React = __webpack_require__(1);
+	var WaveformActions = __webpack_require__(201);
+	
+	var WaveformSelector = React.createClass({
+	  displayName: 'WaveformSelector',
+	
+	  handleChange: function (e) {
+	    WaveformActions.waveformChanged(e.currentTarget.value);
+	    console.log(e.currentTarget.value);
+	  },
+	
+	  render: function () {
+	    return React.createElement(
+	      'div',
+	      { className: 'waveform-selector' },
+	      React.createElement(
+	        'h3',
+	        null,
+	        'Waveform'
+	      ),
+	      React.createElement(
+	        'div',
+	        { className: 'select-container' },
+	        React.createElement(
+	          'select',
+	          { name: 'select', onChange: this.handleChange, value: this.props.waveform },
+	          React.createElement(
+	            'option',
+	            { value: 'triangle', selected: 'selected' },
+	            'Triangle'
+	          ),
+	          React.createElement(
+	            'option',
+	            { value: 'square' },
+	            'Square'
+	          ),
+	          React.createElement(
+	            'option',
+	            { value: 'sawtooth' },
+	            'Sawtooth'
+	          ),
+	          React.createElement(
+	            'option',
+	            { value: 'sine' },
+	            'Sine'
+	          )
+	        )
+	      )
+	    );
+	  }
+	});
+	
+	module.exports = WaveformSelector;
+
+/***/ },
+/* 197 */
+/***/ function(module, exports) {
+
+	var Color = function (rgbArray) {
+	  this.color = { "value": rgbArray };
+	  this.splitComplements = this.splitComplements(this.color.value);
+	};
+	
+	Color.prototype = {
+	  toHSV: function (rgbArray) {
+	    var r = rgbArray[0] / 255;
+	    var g = rgbArray[1] / 255;
+	    var b = rgbArray[2] / 255;
+	    var min = Math.min(Math.min(r, g), b);
+	    var max = Math.max(Math.max(r, g), b);
+	    var delta_max = max - min;
+	
+	    var v = max;
+	    var h, s;
+	
+	    if (delta_max === 0) {
+	      h = 0;
+	      s = 0;
+	    } else {
+	      s = delta_max / max;
+	
+	      delta_r = ((max - r) / 6 + delta_max / 2) / delta_max;
+	      delta_g = ((max - g) / 6 + delta_max / 2) / delta_max;
+	      delta_b = ((max - b) / 6 + delta_max / 2) / delta_max;
+	
+	      if (r === max) {
+	        h = delta_b - delta_g;
+	      } else if (g === max) {
+	        h = delta_r - delta_b + 1 / 3;
+	      } else {
+	        h = delta_g - delta_r + 2 / 3;
+	      }
+	      if (h < 0) {
+	        h += 1;
+	      } else if (h > 1) {
+	        h -= 1;
+	      }
+	    }
+	    return [h, s * 100, v * 100];
+	  },
+	
+	  toRGB: function (hsvArray) {
+	    var h = hsvArray[0],
+	        s = hsvArray[1],
+	        v = hsvArray[2];
+	
+	    if (h < 0) {
+	      h = 0;
+	    }
+	    if (h > 360) {
+	      h = 360;
+	    }
+	    if (s < 0) {
+	      s = 0;
+	    }
+	    if (s > 100) {
+	      s = 100;
+	    }
+	    if (v < 0) {
+	      v = 0;
+	    }
+	    if (v > 100) {
+	      v = 100;
+	    }
+	
+	    s /= 100;
+	    v /= 100;
+	    h /= 60;
+	
+	    var chroma = v * s,
+	        temp = h;
+	    while (temp >= 2.0) {
+	      temp -= 2.0;
+	    }
+	    var x = chroma * (1 - Math.abs(temp - 1));
+	
+	    switch (Math.floor(h)) {
+	      case 0:
+	        r = chroma;
+	        g = x;
+	        b = 0;
+	        break;
+	      case 1:
+	        r = x;
+	        g = chroma;
+	        b = 0;
+	        break;
+	      case 2:
+	        r = 0;
+	        g = chroma;
+	        b = x;
+	        break;
+	      case 3:
+	        r = 0;
+	        g = x;
+	        b = chroma;
+	        break;
+	      case 4:
+	        r = x;
+	        g = 0;
+	        b = chroma;
+	        break;
+	      case 5:
+	        r = chroma;
+	        g = 0;
+	        b = x;
+	        break;
+	      default:
+	        r = 0;
+	        g = 0;
+	        b = 0;
+	        break;
+	    }
+	
+	    var m = v - chroma;
+	    r += m;
+	    g += m;
+	    b += m;
+	    r *= 255;
+	    g *= 255;
+	    b *= 255;
+	
+	    return [r, g, b];
+	  },
+	
+	  splitComplements: function () {
+	    var hsv = this.toHSV(this.color.value);
+	    var left = hsv.slice(0);
+	    var right = hsv.slice(0);
+	    left[0] = left[0] * 360.0 + 30;
+	    right[0] = right[0] * 360.0 - 30;
+	    while (left[0] > 360) {
+	      left[0] -= 360.0;
+	    }
+	    while (right[0] < 0) {
+	      right[0] += 360.0;
+	    }
+	    left = this.toRGB(left);
+	    right = this.toRGB(right);
+	    return [left, right];
+	  }
+	};
+	
+	module.exports = Color;
+
+/***/ },
+/* 198 */
+/***/ function(module, exports, __webpack_require__) {
+
+	var Store = __webpack_require__(163).Store,
+	    Color = __webpack_require__(199),
+	    AppDispatcher = __webpack_require__(179),
+	    ColorStore = new Store(AppDispatcher),
+	    _color = {
+	  color: new Color([0, 128, 256])
+	};
+	console.log(_color);
+	_color.splitComplements = _color.color.splitComplements;
+	
+	ColorStore.setColor = function (color) {
+	  _color = color;
+	  ColorStore.__emitChange();
+	};
+	
+	ColorStore.getColor = function () {
+	  return Object.assign({}, _color);
+	};
+	
+	ColorStore.__onDispatch = function (payload) {
+	  switch (payload.actionType) {
+	    case "colorChanged":
+	      this.setColor(payload.color);
+	      break;
+	  }
+	};
+	
+	module.exports = ColorStore;
+
+/***/ },
+/* 199 */
+/***/ function(module, exports) {
+
+	var Color = function (rgbArray) {
+	  this.color = { "value": rgbArray };
+	  this.splitComplements = this.splitComplements(this.color.value);
+	};
+	
+	Color.prototype = {
+	  toHSV: function (rgbArray) {
+	    var r = rgbArray[0] / 255;
+	    var g = rgbArray[1] / 255;
+	    var b = rgbArray[2] / 255;
+	    var min = Math.min(Math.min(r, g), b);
+	    var max = Math.max(Math.max(r, g), b);
+	    var delta_max = max - min;
+	
+	    var v = max;
+	    var h, s;
+	
+	    if (delta_max === 0) {
+	      h = 0;
+	      s = 0;
+	    } else {
+	      s = delta_max / max;
+	
+	      delta_r = ((max - r) / 6 + delta_max / 2) / delta_max;
+	      delta_g = ((max - g) / 6 + delta_max / 2) / delta_max;
+	      delta_b = ((max - b) / 6 + delta_max / 2) / delta_max;
+	
+	      if (r === max) {
+	        h = delta_b - delta_g;
+	      } else if (g === max) {
+	        h = delta_r - delta_b + 1 / 3;
+	      } else {
+	        h = delta_g - delta_r + 2 / 3;
+	      }
+	      if (h < 0) {
+	        h += 1;
+	      } else if (h > 1) {
+	        h -= 1;
+	      }
+	    }
+	    return [h, s * 100, v * 100];
+	  },
+	
+	  toRGB: function (hsvArray) {
+	    var h = hsvArray[0],
+	        s = hsvArray[1],
+	        v = hsvArray[2];
+	
+	    if (h < 0) {
+	      h = 0;
+	    }
+	    if (h > 360) {
+	      h = 360;
+	    }
+	    if (s < 0) {
+	      s = 0;
+	    }
+	    if (s > 100) {
+	      s = 100;
+	    }
+	    if (v < 0) {
+	      v = 0;
+	    }
+	    if (v > 100) {
+	      v = 100;
+	    }
+	
+	    s /= 100;
+	    v /= 100;
+	    h /= 60;
+	
+	    var chroma = v * s,
+	        temp = h;
+	    while (temp >= 2.0) {
+	      temp -= 2.0;
+	    }
+	    var x = chroma * (1 - Math.abs(temp - 1));
+	
+	    switch (Math.floor(h)) {
+	      case 0:
+	        r = chroma;
+	        g = x;
+	        b = 0;
+	        break;
+	      case 1:
+	        r = x;
+	        g = chroma;
+	        b = 0;
+	        break;
+	      case 2:
+	        r = 0;
+	        g = chroma;
+	        b = x;
+	        break;
+	      case 3:
+	        r = 0;
+	        g = x;
+	        b = chroma;
+	        break;
+	      case 4:
+	        r = x;
+	        g = 0;
+	        b = chroma;
+	        break;
+	      case 5:
+	        r = chroma;
+	        g = 0;
+	        b = x;
+	        break;
+	      default:
+	        r = 0;
+	        g = 0;
+	        b = 0;
+	        break;
+	    }
+	
+	    var m = v - chroma;
+	    r += m;
+	    g += m;
+	    b += m;
+	    r *= 255;
+	    g *= 255;
+	    b *= 255;
+	
+	    return [r, g, b];
+	  },
+	
+	  splitComplements: function () {
+	    var hsv = this.toHSV(this.color.value);
+	    var left = hsv.slice(0);
+	    var right = hsv.slice(0);
+	    left[0] = left[0] * 360.0 + 30;
+	    right[0] = right[0] * 360.0 - 30;
+	    while (left[0] > 360) {
+	      left[0] -= 360.0;
+	    }
+	    while (right[0] < 0) {
+	      right[0] += 360.0;
+	    }
+	    left = this.toRGB(left);
+	    right = this.toRGB(right);
+	    return [left, right];
+	  }
+	};
+	
+	module.exports = Color;
+
+/***/ },
+/* 200 */
+/***/ function(module, exports, __webpack_require__) {
+
+	var AppDispatcher = __webpack_require__(179);
+	
+	var ColorActions = {
+	  colorChanged: function (color) {
+	    AppDispatcher.dispatch({
+	      actionType: "colorChanged",
+	      color: color
+	    });
+	  }
+	};
+	
+	module.exports = ColorActions;
+
+/***/ },
+/* 201 */
+/***/ function(module, exports, __webpack_require__) {
+
+	var AppDispatcher = __webpack_require__(179);
+	
+	var WaveformActions = {
+	  waveformChanged: function (waveform) {
+	    AppDispatcher.dispatch({
+	      actionType: "waveformChanged",
+	      waveform: waveform
+	    });
+	  }
+	};
+	
+	module.exports = WaveformActions;
+
+/***/ },
+/* 202 */
+/***/ function(module, exports, __webpack_require__) {
+
+	var Store = __webpack_require__(163).Store,
+	    AppDispatcher = __webpack_require__(179),
+	    WaveformStore = new Store(AppDispatcher),
+	    _waveform = "triangle";
+	
+	WaveformStore.setWaveform = function (waveform) {
+	  _waveform = waveform;
+	  WaveformStore.__emitChange();
+	};
+	
+	WaveformStore.waveform = function () {
+	  return _waveform + "";
+	};
+	
+	WaveformStore.__onDispatch = function (payload) {
+	  switch (payload.actionType) {
+	    case "waveformChanged":
+	      WaveformStore.setWaveform(payload.waveform);
+	      break;
+	  }
+	};
+	
+	module.exports = WaveformStore;
 
 /***/ }
 /******/ ]);

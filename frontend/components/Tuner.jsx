@@ -15,13 +15,16 @@ var Tuner = React.createClass({
   render: function() {
     return (
       <div className="tuner">
-        <select name="select" onChange={this.handleChange} value={this.props.tuning}>
-          <option value="equal" selected="selected">Equal Temperament (standard)</option>
-          <option value="pythagorean">Pythagorean Tuning</option>
-          <option value="correct">Correct Temperament (Werckmeister)</option>
-          <option value="well">Well Tuning (Young)</option>
-          <option value="limit">5-Limit</option>
-        </select>
+        <h3>Tuning</h3>
+        <div className="select-container">
+          <select name="select" onChange={this.handleChange} value={this.props.tuning}>
+            <option value="equal" selected="selected">Equal Temperament (standard)</option>
+            <option value="pythagorean">Pythagorean Tuning</option>
+            <option value="correct">Correct Temperament (Werckmeister)</option>
+            <option value="well">Well Tuning (Young)</option>
+            <option value="limit">5-Limit</option>
+          </select>
+        </div>
       </div>
     );
   }

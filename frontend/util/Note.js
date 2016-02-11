@@ -38,6 +38,10 @@ Note.prototype = {
 
   setFrequency: function (freq) {
     this.oscillatorNode.frequency.value = freq;
+  },
+
+  setWaveform: function (waveform) {
+    this.oscillatorNode.type = waveform;
   }
 };
 

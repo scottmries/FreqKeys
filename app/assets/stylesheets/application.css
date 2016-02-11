@@ -14,19 +14,92 @@
  *= require_self
  */
 
+ html, body, div, ul, li, input, h1, h2, h3, span, p, a, select, canvas {
+   margin: 0;
+   padding: 0;
+   line-height: inherit;
+   text-decoration: none;
+   box-sizing: border-box;
+ }
+
+ header, .content {
+   width: 820px;;
+   margin: 0 auto;
+   text-align: center;
+ }
+
+ .content {
+   margin-top: 20px;
+ }
+
+ .tuner {
+   text-align: left;
+   float: left;
+ }
+
+ .waveform-selector {
+   text-align: right;
+   float: right;
+ }
+
+ .controls {
+   margin-bottom: 15px;
+   padding: 0 10px;
+ }
+
+ .waveform-selector select {
+   text-align: right;
+ }
+
+ header h1 {
+   font-size: 2.333em;
+ }
+
+header h1 .freq, .content h3 {
+  font-family: "Lora", serif;
+}
+
+header h1 .keys, select {
+  font-family: "Lato", sans-serif;
+}
+
+header h2, .key {
+  font-family: "Playfair Display", serif;
+  font-style: italic;
+}
+
+.content select {
+  border: none;
+  border-bottom: 1px solid black;
+  border-radius: 0px;
+  background: none;
+  appearance: none;
+  -webkit-appearance: searchfield;
+  -webkit-border-radius: 0;
+  -moz-appearance: none;
+}
+
+.content select option {
+  padding: 0px;
+}
+
 .keys {
-  width: 820px;
+  width: 802px;
   position: relative;
   margin: auto;
+  position: relative;
 }
 
 .key {
   width: 100px;
   height: 300px;
-  background: white;
+  background: transparent;
   border: 1px solid black;
   float:left;
   text-align: center;
+  z-index: 2;
+  position: relative;
+  text-transform: lowercase;
 }
 
 .group:after {
@@ -42,6 +115,7 @@
   height: 150px;
   width: 50px;
   position: absolute;
+  z-index: 3;
 }
 
 .CS3 {
@@ -66,9 +140,20 @@
 
 .pressed {
   border-style: inset;
-  background: gray;
+  background: rgba(128, 128, 128, 0.5);;
+  opacity: 50%;
 }
 
 .keys:focus {
-  border: 1px solid yellow;
+  /*border: 1px solid yellow;*/
+}
+
+.absolute-position-behind {
+  position: absolute;
+  z-index: 0;
+}
+
+canvas#oscilloscope {
+  z-index: -1;
+  background: #fff;
 }
