@@ -1,28 +1,17 @@
 == README
 
-This README would normally document whatever steps are necessary to get the
-application up and running.
+## FreqKeys
 
-Things you may want to cover:
+FreqKeys is a synaesthetic synthesizer and visualizer for your browser! You can change the parameters to create different sounds. The waveform and colors react directly to the sounds you make!
 
-* Ruby version
+# Tunings
 
-* System dependencies
+If you want to jump down the rabbit hole about the tunings on this synth, here are some links:
+Equal temperament
+Pythagorean tuning
+Correct temperament
+Well tuning
+5-limit
 
-* Configuration
+# Technical details
 
-* Database creation
-
-* Database initialization
-
-* How to run the test suite
-
-* Services (job queues, cache servers, search engines, etc.)
-
-* Deployment instructions
-
-* ...
-
-
-Please feel free to use a different markup language if you do not plan to run
-<tt>rake doc:app</tt>.
