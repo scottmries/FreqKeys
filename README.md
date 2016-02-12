@@ -24,8 +24,21 @@ Tuning digital instruments is trivial. Why not try out some of the many tuning s
 
 [5-limit] (https://en.wikipedia.org/wiki/Five-limit_tuning#Twelve_tone_scale)
 
-I arbitrarily made C a multiple of 130hz here. In the Pythagorean system, I have C, D, F, and G set to the same frequency as their sharps, as the Pythagoreans didn't distinguish them. 5-limit tuning has dieses between F# and Gb, A# and Bb, and D and D-; I took the simpler ratio in all cases.
+I arbitrarily made C a multiple of 65hz here. In the Pythagorean system, I have C, D, F, and G set to the same frequency as their sharps, as the Pythagoreans didn't have a twelve-tone system. 5-limit tuning has dieses between F# and Gb, A# and Bb, and D and D-; I took the simpler ratio for the single key in all cases.
 
 ### Braggadocio
 
 No jQuery (except key event handlers)! Anything that changes gets passed around in a Flux cycle. Yay!
+
+### Future features
+
++ Filter and Q
++ Delay length and Feedback
++ Octave change
++ Mouse listeners
++ Responsive design
++ Multitouch support
++ Persistent database
++ Recorder stores all parameters
++ Custom waveforms and tunings
++ Envelopes
