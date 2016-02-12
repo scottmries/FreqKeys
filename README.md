@@ -1,6 +1,6 @@
 # FreqKeys
 
-FreqKeys is a synaesthetic synthesizer and visualizer for your browser! You can change the parameters to create different sounds. The waveform and colors react directly to the sounds you make!
+FreqKeys is a synaesthetic synthesizer for your browser! You can change the parameters to create different sounds and colors. The waveform and colors react directly to the sounds you make.
 
 ## Technical details
 
