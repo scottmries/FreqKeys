@@ -1,6 +1,6 @@
 # FreqKeys
 
-![Screenshot](http://imgur.com/PMGHIaX)
+![Screenshot](http://i.imgur.com/PMGHIaX.png)
 
 [Shred here.](https://freqkeys.herokuapp.com/)
 
