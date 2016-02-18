@@ -42,7 +42,6 @@ No jQuery (except key event handlers)! Anything that changes gets passed around 
 
 + Filter and Q
 + Delay length and Feedback
-+ Mouse listeners
 + Responsive design
 + Multitouch support
 + Persistent database
