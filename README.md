@@ -2,7 +2,7 @@
 
 ![Screenshot](http://i.imgur.com/PMGHIaX.png)
 
-[Shred here.](https://freqkeys.herokuapp.com/)
+[Shred here.](https://freqkeys.xyz/)
 
 FreqKeys is a synaesthetic synthesizer for your browser! You can change the parameters to create different sounds and colors. The waveform and colors react directly to the sounds you make.
 
@@ -12,7 +12,11 @@ There is so much cool technical stuff happening with this! Allow me to describe 
 
 ### Colors
 
-To get colors, I sample three points along the waveform every AnimationFrame, and map them to a 0-255 range, one each for an RGB color. I then find the two analogous colors at 30 degrees: I convert the RGB to HSV, rotate it by 30 and -30 degrees, then convert back to RGB so JS can handle them. Voila: color scheme.
+To get colors, I sample three points along the waveform every AnimationFrame, and map them to a 0-255 range, one each for an RGB color. I then find the two split-complementary colors at 30 degrees: I convert the RGB to HSV, rotate it by 150 and -150 degrees, then convert back to RGB so JS can handle them. Voila: color scheme.
+
+### Waveforms
+
+Note that different waveforms seem to have far different "volumes", all else being the same; mathematically, their amplitudes are identical, but the accumulation of overtones, especially in the sawtooth and square waves, spread out over the curve of your ear's frequency/amplitude response, while a sine wave only hits exactly one frequency. TL;DR: some waveforms just sound louder.
 
 ### Tunings
 
@@ -38,11 +42,9 @@ No jQuery (except key event handlers)! Anything that changes gets passed around 
 
 + Filter and Q
 + Delay length and Feedback
-+ Octave change
 + Mouse listeners
 + Responsive design
 + Multitouch support
 + Persistent database
 + Recorder stores all parameters
-+ Custom waveforms and tunings
 + Envelopes
